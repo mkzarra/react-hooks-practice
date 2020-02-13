@@ -34,7 +34,7 @@ function Ingredients() {
     dispatchIngredients({ type: 'SET', ingredients: filteredIngredients})
   }, []);
 
-  async function addIngredientHandler(ingredient) {
+  const addIngredientHandler = useCallback(async function (ingredient) {
     dispatchHttp({ type: 'SEND' });
     try {
       const response = await fetch('https://react-hooks-practice-48016.firebaseio.com/ingredients.json', {
@@ -53,26 +53,25 @@ function Ingredients() {
     } catch(error) {
       dispatchHttp({ type: 'ERROR', responseError: error.message });
     }
-  }
+  }, []);
 
-  async function removeIngredientHandler(ingredientId) {
+  const removeIngredientHandler = useCallback(async function(ingredientId) {
     dispatchHttp({ type: 'SEND' });
     try { 
       await fetch(`https://react-hooks-practice-48016.firebaseio.com/ingredients/${ingredientId}.json`, {
         method: 'DELETE'
       });
       
-      
       dispatchIngredients({ type: 'DELETE', id: ingredientId });
       dispatchHttp({ type: 'RESPONSE' });
     } catch(error) {
       dispatchHttp({ type: 'ERROR', responseError: error.message });
     }
-  }
+  }, []);
 
-  function clearError() {
+  const clearError = useCallback(function() {
     dispatchHttp({ type: 'CLEAR' });
-  }
+  }, []);
     
     return (
     <div className="App">
