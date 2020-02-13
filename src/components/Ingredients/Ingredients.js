@@ -1,20 +1,41 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useReducer, useState, useCallback } from 'react';
 
 import IngredientForm from './IngredientForm';
 import IngredientList from './IngredientList';
 import ErrorModal from '../UI/ErrorModal';
 import Search from './Search';
 
-function Ingredients() {
-  const [userIngredients, setUserIngredients] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState();
+function ingredientReducer(currentIngredients, action) {
+  switch(action.type) {
+    case 'SET': return action.ingredients;
+    case 'ADD': return [...currentIngredients, action.ingredient];
+    case 'DELETE': return currentIngredients.filter(function(ing) {
+      return ing.id !== action.id;
+    });
+    default: throw new Error("Should not be reached: ingredentsReducer");
+  }
+}
 
-  const filteredIngredientsHandler = useCallback(filteredIngredients =>
-      setUserIngredients(filteredIngredients),[]);
+function httpReducer(httpState, action) {
+  switch(action.type) {
+    case 'SEND': return { loading: true, error: null }
+    case 'RESPONSE': return { ...httpState, loading: false }
+    case 'ERROR': return { loading: false, error: action.responseError }
+    case 'CLEAR': return { ...httpState, error: null }
+    default: throw new Error("Should not be reached: httpReducer");
+  }
+}
+
+function Ingredients() {
+  const [userIngredients, dispatchIngredients] = useReducer(ingredientReducer, [])
+  const [httpState, dispatchHttp] = useReducer(httpReducer, { loading: false, error: null });
+
+  const filteredIngredientsHandler = useCallback(function(filteredIngredients) {
+    dispatchIngredients({ type: 'SET', ingredients: filteredIngredients})
+  }, []);
 
   async function addIngredientHandler(ingredient) {
-    setIsLoading(true);
+    dispatchHttp({ type: 'SEND' });
     try {
       const response = await fetch('https://react-hooks-practice-48016.firebaseio.com/ingredients.json', {
         method: 'POST',
@@ -22,46 +43,41 @@ function Ingredients() {
         headers: { "Content-Type": "application/json" }
       });
 
-      setIsLoading(false);
       const responseData = await response.json();
-
-      setUserIngredients(function(prevIngredients) {
-        return [...prevIngredients, { id: responseData.name , ...ingredient }];
-      });
+      
+      dispatchIngredients({ type: 'ADD', ingredient: {
+        id: responseData.name,
+        ...ingredient
+      }});
+      dispatchHttp({ type: 'RESPONSE' });
     } catch(error) {
-      setError("Something went wrong!\n\n" + error);
-      setIsLoading(false);
+      dispatchHttp({ type: 'ERROR', responseError: error.message });
     }
   }
 
   async function removeIngredientHandler(ingredientId) {
-    setIsLoading(true);
+    dispatchHttp({ type: 'SEND' });
     try { 
       await fetch(`https://react-hooks-practice-48016.firebaseio.com/ingredients/${ingredientId}.json`, {
         method: 'DELETE'
       });
       
-      setIsLoading(false);
       
-      setUserIngredients(function(prevIngredients) {
-        return prevIngredients.filter(function(ingredient) {
-          return ingredient.id !== ingredientId;
-        });
-      });
+      dispatchIngredients({ type: 'DELETE', id: ingredientId });
+      dispatchHttp({ type: 'RESPONSE' });
     } catch(error) {
-      setError("Something went wrong!\n\n" + error);
-      setIsLoading(false);
+      dispatchHttp({ type: 'ERROR', responseError: error.message });
     }
   }
 
   function clearError() {
-    setError(null);
+    dispatchHttp({ type: 'CLEAR' });
   }
     
     return (
     <div className="App">
-      {error && <ErrorModal onClose={clearError}>{error}</ErrorModal>}
-      <IngredientForm onAddIngredient={addIngredientHandler} clearError={clearError} loading={isLoading} />
+      {httpState.error && <ErrorModal onClose={clearError}>{httpState.error}</ErrorModal>}
+      <IngredientForm onAddIngredient={addIngredientHandler} clearError={clearError} loading={httpState.Loading} />
 
       <section>
         <Search onLoadIngredients={filteredIngredientsHandler} />
