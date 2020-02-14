@@ -8,12 +8,19 @@ import useHttp from '../../hooks/http';
 
 function ingredientReducer(currentIngredients, action) {
   switch(action.type) {
-    case 'SET': return action.ingredients;
-    case 'ADD': return [...currentIngredients, action.ingredient];
-    case 'DELETE': return currentIngredients.filter(function(ing) {
-      return ing.id !== action.id;
-    });
-    default: throw new Error("Should not be reached: ingredentsReducer");
+    case 'SET':
+      return action.ingredients;
+
+    case 'ADD':
+      return [...currentIngredients, action.ingredient];
+
+    case 'DELETE':
+      return currentIngredients.filter(function(ing) {
+        return ing.id !== action.id;
+      });
+      
+    default:
+      throw new Error("Should not be reached: ingredentsReducer");
   }
 }
 
