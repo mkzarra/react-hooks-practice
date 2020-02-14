@@ -19,7 +19,7 @@ function ingredientReducer(currentIngredients, action) {
 
 function Ingredients() {
   const [userIngredients, dispatchIngredients] = useReducer(ingredientReducer, [])
-  const { isLoading, error, data, sendRequest, extra, identifier } = useHttp();
+  const { isLoading, error, data, sendRequest, extra, identifier, clear } = useHttp();
 
   useEffect(function() {
     if (!isLoading && !error && identifier === 'REMOVE_INGREDIENT') dispatchIngredients({
@@ -44,25 +44,7 @@ function Ingredients() {
       ingredient,
       'ADD_INGREDIENT'
     );
-    // dispatchHttp({ type: 'SEND' });
-    // try {
-    //   const response = await fetch('https://react-hooks-practice-48016.firebaseio.com/ingredients.json', {
-    //     method: 'POST',
-    //     body: JSON.stringify(ingredient),
-    //     headers: { "Content-Type": "application/json" }
-    //   });
-
-    //   const responseData = await response.json();
-      
-    //   dispatchIngredients({ type: 'ADD', ingredient: {
-    //     id: responseData.name,
-    //     ...ingredient
-    //   }});
-    //   dispatchHttp({ type: 'RESPONSE' });
-    // } catch(error) {
-    //   dispatchHttp({ type: 'ERROR', responseError: error.message });
-    // }
-  }, []);
+  }, [sendRequest]);
 
   const removeIngredientHandler = useCallback(function(id) {
     sendRequest(
@@ -73,15 +55,11 @@ function Ingredients() {
       'REMOVE_INGREDIENT'
     );
   }, [sendRequest]);
-
-  const clearError = useCallback(function() {
-    // dispatchHttp({ type: 'CLEAR' });
-  }, []);
     
     return (
     <div className="App">
-      {error && <ErrorModal onClose={clearError}>{error}</ErrorModal>}
-      <IngredientForm onAddIngredient={addIngredientHandler} clearError={clearError} loading={isLoading} />
+      {error && <ErrorModal onClose={clear}>{error}</ErrorModal>}
+      <IngredientForm onAddIngredient={addIngredientHandler} clearError={clear} loading={isLoading} />
 
       <section>
         <Search onLoadIngredients={filteredIngredientsHandler} />
